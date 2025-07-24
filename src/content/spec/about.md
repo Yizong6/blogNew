@@ -1,7 +1,7 @@
 # About
-This is the demo site for [Fuwari](https://github.com/saicaca/fuwari).
+This is the demo site for [Yizong](https://github.com/yx617012389).
 
-::github{repo="saicaca/fuwari"}
+::github{repo="yx617012389/fuwari"}
 
 > ### Sources of images used in this site
 > - [Unsplash](https://unsplash.com/)

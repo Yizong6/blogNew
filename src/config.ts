@@ -9,20 +9,20 @@ import { LinkPreset } from "./types/config";
 
 export const siteConfig: SiteConfig = {
 	title: "Yizong",
-	subtitle: "Demo Site",
-	lang: "zh_CN", // 'en', 'zh_CN', 'zh_TW', 'ja', 'ko', 'es', 'th'
+	subtitle: "Technical Blog",
+	lang: "en", // 'en', 'zh_CN', 'zh_TW', 'ja', 'ko', 'es', 'th'
 	themeColor: {
 		hue: 245, // Default hue for the theme color, from 0 to 360. e.g. red: 0, teal: 200, cyan: 250, pink: 345
 		fixed: false, // Hide the theme color picker for visitors
 	},
 	banner: {
 		enable: true,
-		src: "assets/images/demo-banner.png", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
+		src: "assets/images/daniel-koponyas-rbiLY6ZwvXQ-unsplash.jpg", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 		position: "center", // Equivalent to object-position, only supports 'top', 'center', 'bottom'. 'center' by default
 		credit: {
 			enable: true, // Display the credit text of the banner image
-			text: "NEO TOKYO NOIR 01", // Credit text to be displayed
-			url: "https://www.pixiv.net/artworks/111024784", // (Optional) URL link to the original artwork or artist's page
+			text: "Daniel Koponyas", // Credit text to be displayed
+			url: "https://unsplash.com/photos/village-near-lake-surrounded-by-fogs-rbiLY6ZwvXQ", // (Optional) URL link to the original artwork or artist's page
 		},
 	},
 	toc: {

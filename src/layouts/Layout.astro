@@ -5,6 +5,7 @@ import "@fontsource/roboto/700.css";
 
 import ConfigCarrier from "@components/ConfigCarrier.astro";
 import SpeedInsights from "@vercel/speed-insights/astro";
+import Analytics from "@vercel/analytics/astro";
 import { profileConfig, siteConfig } from "@/config";
 import {
 	AUTO_MODE,
@@ -160,6 +161,7 @@ const bannerOffset =
 
 		<!-- ✅ 添加监测组件 -->
 		<SpeedInsights />
+		<Analytics />
 	</body>
 </html>
 

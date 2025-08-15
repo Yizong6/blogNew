@@ -12,7 +12,10 @@ lang: zh_CN      # 仅当文章语言与 `config.ts` 中的网站语言不同时
 
 
 本文内容整理至[Nodeseek论坛](https://www.nodeseek.com/)与**个人实践**
-{% note danger flat %}请注意，以下命令适用于基于**Linux**的系统。对于其他操作系统，操作命令可能有所不同。{% endnote %}
+
+:::important
+请注意，以下命令适用于基于**Linux**的系统。对于其他操作系统，操作命令可能有所不同。
+:::
 
 
 

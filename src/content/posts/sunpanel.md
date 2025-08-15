@@ -12,7 +12,9 @@ lang: zh_CN      # 仅当文章语言与 `config.ts` 中的网站语言不同时
 
 # 在Debian12上部署Sunpanel v1.3.0并使用Caddy反向代理
 
-{% note warning simple %}warning Sunpanel v1.3.0 为最后一个免捐赠版本，如需使用最新版请访问作者GitHub查看{% endnote %}
+:::important
+Sunpanel v1.3.0 为最后一个免捐赠版本，如需使用最新版请访问作者GitHub查看
+:::
 
 **项目位置**：https://github.com/hslr-s/sun-panel
 

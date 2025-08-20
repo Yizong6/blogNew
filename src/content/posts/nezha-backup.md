@@ -36,6 +36,7 @@ sudo apt install git zip curl -y
 3. 勾选权限：✅ `repo`
 4. 复制 Token（如：`ghp_xxxxxxxxxxxxxxxxxxxxxxxx`）
 5. 新建一个仓库，命名为 `nezha-backup`（建议私有）
+6. 仓库地址形如：https://github.com/<你的GitHub用户名>/nezha-backup.git
 
 ### 3. 获取 Telegram Bot Token 和 Chat ID
 
@@ -70,65 +71,65 @@ vim /root/nezha_backup.sh
 ```bash
 #!/bin/bash
 
-# === 配置项 ===
-BACKUP_DIR="/opt/nezha"
-GIT_REPO_DIR="/root/nezha-backup"
-GIT_REMOTE="origin"
-GIT_BRANCH="main"
-GITHUB_REPO="github.com/你的用户名/nezha-backup.git"       # ⚠️ 替换为你的仓库地址
-GITHUB_TOKEN="ghp_xxx你的GitHubToken"                       # ⚠️ 替换为你的 GitHub Token
-MAX_DAYS=7
+### ====== 需要修改的地方 START ======
+GITHUB_USER="你的GitHub用户名"        # 修改成你的 GitHub 用户名
+GITHUB_REPO="nezha_backup"           # 修改成你的仓库名
+GITHUB_TOKEN="你的GitHub Token"      # 修改成你的 GitHub Token（需要有 repo 权限）
+BOT_TOKEN="你的TelegramBotToken"     # 修改成你的 Telegram Bot Token
+CHAT_ID="你的ChatID"                 # 修改成你的 Telegram Chat ID
+BACKUP_DIR="/opt/nezha"              # Nezha 安装路径
+KEEP_DAYS=7                          # 保留天数（超过就自动删除）
+### ====== 需要修改的地方 END ======
 
-# === Telegram 配置 ===
-TG_BOT_TOKEN="123456789:ABC-你的BotToken"                   # ⚠️ 替换为你的 Bot Token
-TG_CHAT_ID="你的ChatID"                                     # ⚠️ 替换为你的 Chat ID
+WORKDIR="/root/nezha-backup"
+DATE=$(date +%F)
+TARFILE="nezha-backup-$DATE.tar.gz"
 
-# === 发送 Telegram 通知函数 ===
 send_telegram() {
-  curl -s -X POST "https://api.telegram.org/bot$TG_BOT_TOKEN/sendMessage" \
-    -d chat_id="$TG_CHAT_ID" \
-    -d text="$1" \
-    -d parse_mode="Markdown"
+    local msg="$1"
+    curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+        -d "chat_id=${CHAT_ID}" \
+        -d "parse_mode=Markdown" \
+        -d "text=${msg}" >/dev/null
 }
 
-# 时间戳与归档名
-TODAY=$(date +"%Y-%m-%d")
-ARCHIVE_NAME="nezha-backup-$TODAY.tar.gz"
+### ====== 改成自己 GitHub 的名字和邮箱 ======
+echo "[INFO] 初始化 Git 全局身份..."
+git config --global user.name "NezhaBackupBot"      # 可改
+git config --global user.email "nezha@backup.local" # 可改
 
-# 切换到仓库目录
-mkdir -p "$GIT_REPO_DIR"
-cd "$GIT_REPO_DIR" || exit 1
+echo "[INFO] 初始化仓库..."
+rm -rf "$WORKDIR"
+mkdir -p "$WORKDIR"
+cd "$WORKDIR" || exit 1
 
-# 第一次初始化 Git 仓库
-if [ ! -d ".git" ]; then
-  git clone "https://$GITHUB_TOKEN@$GITHUB_REPO" .
-fi
+# 克隆仓库（使用 token 免密登录）
+git clone "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${GITHUB_REPO}.git" "$WORKDIR" || {
+    send_telegram "⚠️ *Nezha 备份失败*：无法克隆仓库"
+    exit 1
+}
 
-# 清理本地超期归档
-find . -name "nezha-backup-*.tar.gz" -type f -mtime +$MAX_DAYS -exec rm -f {} \;
+echo "[INFO] 开始打包 $BACKUP_DIR..."
+tar -czf "$TARFILE" -C "$BACKUP_DIR" . || {
+    send_telegram "⚠️ *Nezha 备份失败*：打包错误"
+    exit 1
+}
 
-# 同步远程
-git pull "$GIT_REMOTE" "$GIT_BRANCH"
+mv "$TARFILE" "$WORKDIR/"
+git add .
 
-# 清理 Git 超期归档记录
-git ls-files | grep 'nezha-backup-.*\.tar\.gz' | while read -r file; do
-  FILE_DATE=$(echo "$file" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}')
-  if [[ $(date -d "$FILE_DATE" +%s) -lt $(date -d "$MAX_DAYS days ago" +%s) ]]; then
-    git rm -f "$file"
-  fi
-done
+# 删除超过 KEEP_DAYS 的旧备份
+echo "[INFO] 删除超过 $KEEP_DAYS 天的旧备份..."
+find "$WORKDIR" -name "nezha-backup-*.tar.gz" -type f -mtime +$KEEP_DAYS -exec git rm -f {} \; >/dev/null 2>&1
 
-# 创建新归档
-tar -czf "$ARCHIVE_NAME" "$BACKUP_DIR"
+git commit -m "Backup on $DATE" >/dev/null 2>&1
+git push origin main >/dev/null 2>&1 || {
+    send_telegram "⚠️ *Nezha 备份失败*：推送错误"
+    exit 1
+}
 
-# 提交并推送
-git add "$ARCHIVE_NAME"
-git commit -m "Backup on $TODAY"
-if git push "$GIT_REMOTE" "$GIT_BRANCH"; then
-  send_telegram "🎉 *Nezha 备份成功！"
-else
-  send_telegram "⚠️ *Nezha 备份失败！*"
-fi
+send_telegram "🎉 *Nezha 备份成功！*\n已保存：$DATE\n已自动清理超过 ${KEEP_DAYS} 天的旧备份"
+echo "[INFO] 备份成功"
 
 ```
 
@@ -142,21 +143,10 @@ chmod +x /root/nezha_backup.sh
 
 ---
 
-## 第四步：Git 用户信息 & 首次推送
-
-配置 Git 全局身份（仅需一次）：
+## 第四步：手动运行测试
 
 ```bash
-git config --global user.name "YourName"
-git config --global user.email "you@example.com"
-```
-
-初次在仓库目录执行：
-
-```bash
-cd /root/nezha-backup
-git branch -M main
-git push -u origin main
+bash /root/nezha_backup.sh
 ```
 
 ---
@@ -170,19 +160,16 @@ crontab -e
 添加以下内容（北京时间早上 6 点 = UTC 22 点）：
 
 ```cron
-0 22 * * * /bin/bash /root/nezha_backup.sh >/dev/null 2>&1
+0 22 * * * /root/nezha_backup.sh >/dev/null 2>&1
 ```
 
 保存并退出（vim：:wq；nano：Ctrl+O → Ctrl+X）
 
 ---
 
-## 第六步：手动测试
-
-```bash
-bash /root/nezha_backup.sh
-```
 
 ✔️ 检查点
+
 GitHub 仓库出现 nezha-backup-YYYY-MM-DD.tar.gz
+
 Telegram 收到「备份成功」通知

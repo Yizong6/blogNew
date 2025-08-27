@@ -17,7 +17,7 @@ export const siteConfig: SiteConfig = {
 	},
 	banner: {
 		enable: true,
-		src: "assets/images/daniel-koponyas-rbiLY6ZwvXQ-unsplash.jpg", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
+		src: "assets/images/background.webp", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 		position: "center", // Equivalent to object-position, only supports 'top', 'center', 'bottom'. 'center' by default
 		credit: {
 			enable: true, // Display the credit text of the banner image
@@ -31,11 +31,11 @@ export const siteConfig: SiteConfig = {
 	},
 	favicon: [
 		// Leave this array empty to use the default favicon
-		// {
-		//   src: '/favicon/icon.png',    // Path of the favicon, relative to the /public directory
+		 {
+		   src: 'assets/images/head-image.webp',    // Path of the favicon, relative to the /public directory
 		//   theme: 'light',              // (Optional) Either 'light' or 'dark', set only if you have different favicons for light and dark mode
 		//   sizes: '32x32',              // (Optional) Size of the favicon, set only if you have favicons of different sizes
-		// }
+		 }
 	],
 };
 
@@ -45,17 +45,17 @@ export const navBarConfig: NavBarConfig = {
 		LinkPreset.Archive,
 		LinkPreset.About,
 		{
-			name: "GitHub",
-			url: "https://github.com/yx617012389", // Internal links should not include the base path, as it is automatically added
+			name: "Status",
+			url: "https://status.yizong.de/", // Internal links should not include the base path, as it is automatically added
 			external: true, // Show an external link icon and will open in a new tab
 		},
 	],
 };
 
 export const profileConfig: ProfileConfig = {
-	avatar: "assets/images/demo-avatar.jpg", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
+	avatar: "assets/images/head-image.webp", // Relative to the /src directory. Relative to the /public directory if it starts with '/'
 	name: "Yizong",
-	bio: "Carpe diem, quam minimum credula postero.",
+	bio: "The answer lies ahead.",
 	links: [
 		{
 			name: "GitHub",

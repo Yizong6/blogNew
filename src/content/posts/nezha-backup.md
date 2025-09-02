@@ -14,7 +14,7 @@ lang: zh_CN      # 仅当文章语言与 `config.ts` 中的网站语言不同时
 **此脚本为 Nezha面板 每日自动备份到 GitHub 并通过 Telegram 通知**
 
 操作环境：Debian11 VPS **nezha非docker安装**
-> **目标**：每天早上 6:00（北京时间）自动  
+> **目标**：每天凌晨 3:00（北京时间）自动
 > 1. 打包 `/opt/nezha` 为 `.tar.gz`  
 > 2. 上传到 GitHub 仓库  
 > 3. 自动清理 7 天前的旧备份  
@@ -71,15 +71,15 @@ vim /root/nezha_backup.sh
 ```bash
 #!/bin/bash
 
-### ====== 需要修改的地方 START ======
-GITHUB_USER="你的GitHub用户名"        # 修改成你的 GitHub 用户名
-GITHUB_REPO="nezha_backup"           # 修改成你的仓库名
-GITHUB_TOKEN="你的GitHub Token"      # 修改成你的 GitHub Token（需要有 repo 权限）
-BOT_TOKEN="你的TelegramBotToken"     # 修改成你的 Telegram Bot Token
-CHAT_ID="你的ChatID"                 # 修改成你的 Telegram Chat ID
-BACKUP_DIR="/opt/nezha"              # Nezha 安装路径
-KEEP_DAYS=7                          # 保留天数（超过就自动删除）
-### ====== 需要修改的地方 END ======
+### ====== 需要修改的地方 ======
+GITHUB_USER="XXXXX"        # 修改成你的 GitHub 用户名
+GITHUB_REPO="nezha-backup"       # 修改成你的仓库名
+GITHUB_TOKEN="ghp_xxxxxxxxxxxxxxxxxxxxx"  # 修改成你的 GitHub Token（需要有 repo 权限）
+BOT_TOKEN="XXXXX:XXXXXXXXXX"   # 修改成你的 Telegram Bot Token
+CHAT_ID="XXXXX"             # 修改成你的 Telegram Chat ID
+BACKUP_DIR="/opt/nezha"          # Nezha 安装路径
+KEEP_DAYS=7                      # 保留天数（超过就自动删除）
+### ====== 后面还有两处需要修改的地方 ======
 
 WORKDIR="/root/nezha-backup"
 DATE=$(date +%F)
@@ -93,21 +93,23 @@ send_telegram() {
         -d "text=${msg}" >/dev/null
 }
 
-### ====== 改成自己 GitHub 的名字和邮箱 ======
-echo "[INFO] 初始化 Git 全局身份..."
-git config --global user.name "NezhaBackupBot"      # 可改
-git config --global user.email "nezha@backup.local" # 可改
-
 echo "[INFO] 初始化仓库..."
-rm -rf "$WORKDIR"
-mkdir -p "$WORKDIR"
-cd "$WORKDIR" || exit 1
-
-# 克隆仓库（使用 token 免密登录）
-git clone "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${GITHUB_REPO}.git" "$WORKDIR" || {
-    send_telegram "⚠️ *Nezha 备份失败*：无法克隆仓库"
-    exit 1
-}
+if [ ! -d "$WORKDIR/.git" ]; then
+    # 第一次运行：克隆仓库
+    rm -rf "$WORKDIR"
+    mkdir -p "$WORKDIR"
+    git clone "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${GITHUB_REPO}.git" "$WORKDIR" || {
+        send_telegram "⚠️ *Nezha 备份失败*：无法克隆仓库"
+        exit 1
+    }
+    cd "$WORKDIR" || exit 1
+    git config user.name "XXXXX"                # 修改成你的 GitHub 用户名
+    git config user.email "XXXXX@gmail.com"     # 修改成你的 GitHub 邮箱
+else
+    # 后续运行：直接进入仓库并拉取最新代码
+    cd "$WORKDIR" || exit 1
+    git pull origin main >/dev/null 2>&1 || true
+fi
 
 echo "[INFO] 开始打包 $BACKUP_DIR..."
 tar -czf "$TARFILE" -C "$BACKUP_DIR" . || {
@@ -128,9 +130,8 @@ git push origin main >/dev/null 2>&1 || {
     exit 1
 }
 
-send_telegram "🎉 *Nezha 备份成功！*\n已保存：$DATE\n已自动清理超过 ${KEEP_DAYS} 天的旧备份"
+send_telegram "🎉 *Nezha 备份成功！*已保存：$DATE，已自动清理超过 ${KEEP_DAYS} 天的旧备份"
 echo "[INFO] 备份成功"
-
 ```
 
 ---
@@ -145,22 +146,28 @@ chmod +x /root/nezha_backup.sh
 
 ## 第四步：手动运行测试
 
+手动运行
 ```bash
 bash /root/nezha_backup.sh
 ```
 
+假装corn运行
+```bash
+env -i /bin/bash -c 'HOME=/root /bin/bash /root/nezha_backup.sh'
+```
+
 ---
 
-## 第五步：添加定时任务（每天北京时间早上 6 点）
+## 第五步：添加定时任务（每天北京时间凌晨 3 点）
 
 ```bash
 crontab -e
 ```
 
-添加以下内容（北京时间早上 6 点 = UTC 22 点）：
+添加以下内容（北京时间凌晨 3 点 ）：
 
 ```cron
-0 22 * * * /root/nezha_backup.sh >/dev/null 2>&1
+0 3 * * * env -i HOME=/root /bin/bash /root/nezha_backup.sh >/dev/null 2>&1
 ```
 
 保存并退出（vim：:wq；nano：Ctrl+O → Ctrl+X）

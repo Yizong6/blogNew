@@ -15,163 +15,213 @@ import { profileConfig, siteConfig } from "../../config";
 import { formatDateToYYYYMMDD } from "../../utils/date-utils";
 
 export async function getStaticPaths() {
-	const blogEntries = await getSortedPosts();
-	return blogEntries.map((entry) => ({
-		params: { slug: entry.slug },
-		props: { entry },
-	}));
+  const blogEntries = await getSortedPosts();
+  return blogEntries.map((entry) => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }));
 }
 
 const { entry } = Astro.props;
 const { Content, headings } = await entry.render();
-
 const { remarkPluginFrontmatter } = await entry.render();
 
 const jsonLd = {
-	"@context": "https://schema.org",
-	"@type": "BlogPosting",
-	headline: entry.data.title,
-	description: entry.data.description || entry.data.title,
-	keywords: entry.data.tags,
-	author: {
-		"@type": "Person",
-		name: profileConfig.name,
-		url: Astro.site,
-	},
-	datePublished: formatDateToYYYYMMDD(entry.data.published),
-	inLanguage: entry.data.lang
-		? entry.data.lang.replace("_", "-")
-		: siteConfig.lang.replace("_", "-"),
-	// TODO include cover image here
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: entry.data.title,
+  description: entry.data.description || entry.data.title,
+  keywords: entry.data.tags,
+  author: {
+    "@type": "Person",
+    name: profileConfig.name,
+    url: Astro.site,
+  },
+  datePublished: formatDateToYYYYMMDD(entry.data.published),
+  inLanguage: entry.data.lang
+    ? entry.data.lang.replace("_", "-")
+    : siteConfig.lang.replace("_", "-"),
+  // TODO include cover image here
 };
 ---
-<MainGridLayout banner={entry.data.image} title={entry.data.title} description={entry.data.description} lang={entry.data.lang} setOGTypeArticle={true} headings={headings}>
-    <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
-    <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative mb-4">
-        <div id="post-container" class:list={["card-base z-10 px-6 md:px-9 pt-6 pb-4 relative w-full ",
-            {}
-        ]}>
-            <!-- word count and reading time -->
-            <div class="flex flex-row text-black/30 dark:text-white/30 gap-5 mb-3 transition onload-animation">
-                <div class="flex flex-row items-center">
-                    <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
-                        <Icon name="material-symbols:notes-rounded"></Icon>
-                    </div>
-                    <div class="text-sm">{remarkPluginFrontmatter.words} {" " + i18n(I18nKey.wordsCount)}</div>
-                </div>
-                <div class="flex flex-row items-center">
-                    <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
-                        <Icon name="material-symbols:schedule-outline-rounded"></Icon>
-                    </div>
-                    <div class="text-sm">
-                        {remarkPluginFrontmatter.minutes} {" " + i18n(remarkPluginFrontmatter.minutes === 1 ? I18nKey.minuteCount : I18nKey.minutesCount)}
-                    </div>
-                </div>
+
+<MainGridLayout
+  banner={entry.data.image}
+  title={entry.data.title}
+  description={entry.data.description}
+  lang={entry.data.lang}
+  setOGTypeArticle={true}
+  headings={headings}
+>
+  <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)}></script>
+
+  <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative mb-4">
+    <div
+      id="post-container"
+      class:list={[
+        "card-base z-10 px-6 md:px-9 pt-6 pb-4 relative w-full ",
+        {}
+      ]}
+    >
+      <!-- ✅ 将 data-pagefind-body 放到“文章主体”的外层容器上 -->
+      <div
+        data-pagefind-body
+        data-pagefind-meta-title={entry.data.title}
+        data-pagefind-meta-description={entry.data.description || entry.data.title}
+        data-pagefind-meta-date={formatDateToYYYYMMDD(entry.data.published)}
+        data-pagefind-meta-lang={(entry.data.lang ? entry.data.lang : siteConfig.lang).replace("_", "-")}
+        data-pagefind-filter={`tags: ${(entry.data.tags || []).join(",")}`}
+      >
+        <!-- word count and reading time（可保留在主体内，便于上下文匹配） -->
+        <div class="flex flex-row text-black/30 dark:text-white/30 gap-5 mb-3 transition onload-animation">
+          <div class="flex flex-row items-center">
+            <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
+              <Icon name="material-symbols:notes-rounded"></Icon>
             </div>
-
-            <!-- title -->
-            <div class="relative onload-animation">
-                <div
-                    data-pagefind-body data-pagefind-weight="10" data-pagefind-meta="title"
-                    class="transition w-full block font-bold mb-3
-                    text-3xl md:text-[2.25rem]/[2.75rem]
-                    text-black/90 dark:text-white/90
-                    md:before:w-1 before:h-5 before:rounded-md before:bg-[var(--primary)]
-                    before:absolute before:top-[0.75rem] before:left-[-1.125rem]
-                ">
-                    {entry.data.title}
-                </div>
+            <div class="text-sm">
+              {remarkPluginFrontmatter.words} {" " + i18n(I18nKey.wordsCount)}
             </div>
-
-            <!-- metadata -->
-            <div class="onload-animation">
-                <PostMetadata
-                        class="mb-5"
-                        published={entry.data.published}
-                        updated={entry.data.updated}
-                        tags={entry.data.tags}
-                        category={entry.data.category}
-                ></PostMetadata>
-                {!entry.data.image && <div class="border-[var(--line-divider)] border-dashed border-b-[1px] mb-5"></div>}
+          </div>
+          <div class="flex flex-row items-center">
+            <div class="transition h-6 w-6 rounded-md bg-black/5 dark:bg-white/10 text-black/50 dark:text-white/50 flex items-center justify-center mr-2">
+              <Icon name="material-symbols:schedule-outline-rounded"></Icon>
             </div>
-
-            <!-- always show cover as long as it has one -->
-
-            {entry.data.image &&
-                <ImageWrapper id="post-cover" src={entry.data.image} basePath={path.join("content/posts/", getDir(entry.id))} class="mb-8 rounded-xl banner-container onload-animation"/>
-            }
-
-
-            <Markdown class="mb-6 markdown-content onload-animation">
-                <Content />
-            </Markdown>
-
-            {licenseConfig.enable && <License title={entry.data.title} slug={entry.slug} pubDate={entry.data.published} class="mb-6 rounded-xl license-container onload-animation"></License>}
-
+            <div class="text-sm">
+              {remarkPluginFrontmatter.minutes} {" " + i18n(remarkPluginFrontmatter.minutes === 1 ? I18nKey.minuteCount : I18nKey.minutesCount)}
+            </div>
+          </div>
         </div>
-    </div>
 
-    <div class="flex flex-col md:flex-row justify-between mb-4 gap-4 overflow-hidden w-full">
-        <a href={entry.data.nextSlug ? getPostUrlBySlug(entry.data.nextSlug) : "#"}
-           class:list={["w-full font-bold overflow-hidden active:scale-95", {"pointer-events-none": !entry.data.nextSlug}]}>
-            {entry.data.nextSlug && <div class="btn-card rounded-2xl w-full h-[3.75rem] max-w-full px-4 flex items-center !justify-start gap-4" >
+        <!-- 标题：保留高权重 -->
+        <h1
+          class="relative onload-animation transition w-full block font-bold mb-3
+                 text-3xl md:text-[2.25rem]/[2.75rem]
+                 text-black/90 dark:text-white/90
+                 md:before:w-1 before:h-5 before:rounded-md before:bg-[var(--primary)]
+                 before:absolute before:top-[0.75rem] before:left-[-1.125rem]"
+          data-pagefind-weight="10"
+        >
+          {entry.data.title}
+        </h1>
+
+        <!-- metadata -->
+        <div class="onload-animation">
+          <PostMetadata
+            class="mb-5"
+            published={entry.data.published}
+            updated={entry.data.updated}
+            tags={entry.data.tags}
+            category={entry.data.category}
+          />
+          {!entry.data.image && <div class="border-[var(--line-divider)] border-dashed border-b-[1px] mb-5"></div>}
+        </div>
+
+        <!-- 封面（有则显示） -->
+        {entry.data.image && (
+          <ImageWrapper
+            id="post-cover"
+            src={entry.data.image}
+            basePath={path.join("content/posts/", getDir(entry.id))}
+            class="mb-8 rounded-xl banner-container onload-animation"
+          />
+        )}
+
+        <!-- ✅ 正文（必须位于 data-pagefind-body 容器内） -->
+        <Markdown class="mb-6 markdown-content onload-animation">
+          <Content />
+        </Markdown>
+
+        {licenseConfig.enable && (
+          <License
+            title={entry.data.title}
+            slug={entry.slug}
+            pubDate={entry.data.published}
+            class="mb-6 rounded-xl license-container onload-animation"
+          />
+        )}
+      </div>
+
+      <!-- ❌ 非正文噪声，避免进入索引 -->
+      <div data-pagefind-ignore>
+        <!-- 前后篇导航 -->
+        <div class="flex flex-col md:flex-row justify-between mb-4 gap-4 overflow-hidden w-full">
+          <a
+            href={entry.data.nextSlug ? getPostUrlBySlug(entry.data.nextSlug) : "#"}
+            class:list={[
+              "w-full font-bold overflow-hidden active:scale-95",
+              { "pointer-events-none": !entry.data.nextSlug }
+            ]}
+          >
+            {entry.data.nextSlug && (
+              <div class="btn-card rounded-2xl w-full h-[3.75rem] max-w-full px-4 flex items-center !justify-start gap-4">
                 <Icon name="material-symbols:chevron-left-rounded" class="text-[2rem] text-[var(--primary)]" />
                 <div class="overflow-hidden transition overflow-ellipsis whitespace-nowrap max-w-[calc(100%_-_3rem)] text-black/75 dark:text-white/75">
-                    {entry.data.nextTitle}
+                  {entry.data.nextTitle}
                 </div>
-            </div>}
-        </a>
+              </div>
+            )}
+          </a>
 
-        <a href={entry.data.prevSlug ? getPostUrlBySlug(entry.data.prevSlug) : "#"}
-           class:list={["w-full font-bold overflow-hidden active:scale-95", {"pointer-events-none": !entry.data.prevSlug}]}>
-            {entry.data.prevSlug && <div class="btn-card rounded-2xl w-full h-[3.75rem] max-w-full px-4 flex items-center !justify-end gap-4">
+          <a
+            href={entry.data.prevSlug ? getPostUrlBySlug(entry.data.prevSlug) : "#"}
+            class:list={[
+              "w-full font-bold overflow-hidden active:scale-95",
+              { "pointer-events-none": !entry.data.prevSlug }
+            ]}
+          >
+            {entry.data.prevSlug && (
+              <div class="btn-card rounded-2xl w-full h-[3.75rem] max-w-full px-4 flex items-center !justify-end gap-4">
                 <div class="overflow-hidden transition overflow-ellipsis whitespace-nowrap max-w-[calc(100%_-_3rem)] text-black/75 dark:text-white/75">
-                    {entry.data.prevTitle}
+                  {entry.data.prevTitle}
                 </div>
                 <Icon name="material-symbols:chevron-right-rounded" class="text-[2rem] text-[var(--primary)]" />
-            </div>}
-        </a>
-    </div>
+              </div>
+            )}
+          </a>
+        </div>
 
-    <!-- 文章帮助反馈区域 -->
-            <div class="mb-4 p-3 rounded-lg bg-[var(--license-block-bg)] border border-[var(--line-divider)] onload-animation">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <div class="h-4 w-4 rounded bg-[var(--primary)] flex items-center justify-center">
-                            <Icon name="material-symbols:help-outline" class="text-[0.75rem] text-white dark:text-black/70"></Icon>
-                        </div>
-                        <p class="text-black/80 dark:text-white/80 text-sm">这篇文章是否对你有帮助？</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <a href="/posts/pin/" class="group flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] active:bg-[var(--btn-regular-bg-active)] text-[var(--btn-content)] text-xs font-medium transition-all active:scale-95">
-                            <Icon name="material-symbols:contact-mail-outline" class="text-[0.875rem] group-hover:scale-110 transition-transform"></Icon>
-                            联系
-                        </a>
-                        <a href="/donate/" class="group flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--primary)] hover:bg-[oklch(0.65_0.16_var(--hue))] active:bg-[oklch(0.60_0.18_var(--hue))] text-white dark:text-black/80 text-xs font-medium transition-all active:scale-95">
-                            <Icon name="material-symbols:favorite-outline" class="text-[0.875rem] group-hover:scale-110 transition-transform"></Icon>
-                            赞助
-                        </a>
-                    </div>
-                </div>
+        <!-- 文章帮助反馈区域 -->
+        <div class="mb-4 p-3 rounded-lg bg-[var(--license-block-bg)] border border-[var(--line-divider)] onload-animation">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="h-4 w-4 rounded bg-[var(--primary)] flex items-center justify-center">
+                <Icon name="material-symbols:help-outline" class="text-[0.75rem] text-white dark:text-black/70"></Icon>
+              </div>
+              <p class="text-black/80 dark:text-white/80 text-sm">这篇文章是否对你有帮助？</p>
             </div>
+            <div class="flex gap-2">
+              <a href="/posts/pin/" class="group flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] active:bg-[var(--btn-regular-bg-active)] text-[var(--btn-content)] text-xs font-medium transition-all active:scale-95">
+                <Icon name="material-symbols:contact-mail-outline" class="text-[0.875rem] group-hover:scale-110 transition-transform"></Icon>
+                联系
+              </a>
+              <a href="/donate/" class="group flex items-center gap-1 px-3 py-1.5 rounded bg-[var(--primary)] hover:bg-[oklch(0.65_0.16_var(--hue))] active:bg-[oklch(0.60_0.18_var(--hue))] text-white dark:text-black/80 text-xs font-medium transition-all active:scale-95">
+                <Icon name="material-symbols:favorite-outline" class="text-[0.875rem] group-hover:scale-110 transition-transform"></Icon>
+                赞助
+              </a>
+            </div>
+          </div>
+        </div>
 
-
-    <!-- Giscus 评论区 -->
-    <script src="https://giscus.app/client.js"
-        data-repo="Yizong6/Comment"
-        data-repo-id="R_kgDOPlEX1A"
-        data-category="Announcements"
-        data-category-id="DIC_kwDOPlEX1M4CuqBC"
-        data-mapping="pathname"
-        data-strict="0"
-        data-reactions-enabled="1"
-        data-emit-metadata="0"
-        data-input-position="top"
-        data-theme="preferred_color_scheme"
-        data-lang="zh-CN"
-        data-loading="lazy"
-        crossorigin="anonymous"
-        async>
-    </script>
-
+        <!-- Giscus 评论区 -->
+        <script
+          src="https://giscus.app/client.js"
+          data-repo="Yizong6/Comment"
+          data-repo-id="R_kgDOPlEX1A"
+          data-category="Announcements"
+          data-category-id="DIC_kwDOPlEX1M4CuqBC"
+          data-mapping="pathname"
+          data-strict="0"
+          data-reactions-enabled="1"
+          data-emit-metadata="0"
+          data-input-position="top"
+          data-theme="preferred_color_scheme"
+          data-lang="zh-CN"
+          data-loading="lazy"
+          crossorigin="anonymous"
+          async
+        >
+        </script>
+      </div>
+    </div>
+  </div>
 </MainGridLayout>

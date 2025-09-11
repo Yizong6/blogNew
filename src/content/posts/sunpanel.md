@@ -46,8 +46,8 @@ sudo curl -L -o sunpanel.tar.gz https://github.com/hslr-s/sun-panel/releases/dow
 
 3. 解压缩二进制包
 ```bash
-sudo tar -zxvf sun-panel_v1.3.0_linux_amd64.tar.gz
-sudo rm sun-panel_v1.3.0_linux_amd64.tar.gz
+sudo tar -zxvf sunpanel.tar.gz 
+sudo rm sunpanel.tar.gz
 ```
 
 4. 确认目录名称
@@ -85,10 +85,11 @@ WantedBy=multi-user.target
 
 # 第四步：启动服务并排除端口冲突（大概率不会出现此情况）
 
-启动服务
+启动服务并设置开机自启
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl start sunpanel
+sudo systemctl enable sunpanel
 ```
 
 查看运行状态
@@ -108,12 +109,6 @@ sudo kill -9 <PID>
 sudo systemctl start sunpanel
 sudo systemctl status sunpanel
 ```
-
-设置开机自启
-```bash
-sudo systemctl enable sunpanel
-```
-
 
 
 # 第五步：安装 Caddy
@@ -138,7 +133,6 @@ sudo vim /etc/caddy/Caddyfile
 清空原内容并填写如下配置（请将 sun.yourdomain.com 替换为你的域名）：
 ```bash
 sun.yourdomain.com {
-    encode gzip zstd
     reverse_proxy localhost:3002
 }
 ```

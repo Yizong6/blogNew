@@ -81,6 +81,7 @@ BACKUP_DIR="/opt/nezha"          # Nezha 安装路径
 KEEP_DAYS=7                      # 保留天数（超过就自动删除）
 ### ====== 后面还有两处需要修改的地方 ======
 
+
 WORKDIR="/root/nezha-backup"
 DATE=$(date +%F)
 TARFILE="nezha-backup-$DATE.tar.gz"
@@ -95,7 +96,6 @@ send_telegram() {
 
 echo "[INFO] 初始化仓库..."
 if [ ! -d "$WORKDIR/.git" ]; then
-    # 第一次运行：克隆仓库
     rm -rf "$WORKDIR"
     mkdir -p "$WORKDIR"
     git clone "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${GITHUB_REPO}.git" "$WORKDIR" || {
@@ -103,35 +103,48 @@ if [ ! -d "$WORKDIR/.git" ]; then
         exit 1
     }
     cd "$WORKDIR" || exit 1
-    git config user.name "XXXXX"                # 修改成你的 GitHub 用户名
-    git config user.email "XXXXX@gmail.com"     # 修改成你的 GitHub 邮箱
+    git config user.name "$GITHUB_USER"
+    git config user.email "${GITHUB_USER}@users.noreply.github.com"
+
+    # 检查仓库是否为空
+    if [ -z "$(ls -A "$WORKDIR")" ]; then
+        echo "# Nezha Backup Repo" > README.md
+        git add README.md
+        git commit -m "init repo"
+        git branch -M main
+        git push -u origin main
+        echo "[INFO] 已完成 GitHub 仓库初始化"
+    fi
 else
-    # 后续运行：直接进入仓库并拉取最新代码
     cd "$WORKDIR" || exit 1
     git pull origin main >/dev/null 2>&1 || true
 fi
 
-echo "[INFO] 开始打包 $BACKUP_DIR..."
-tar -czf "$TARFILE" -C "$BACKUP_DIR" . || {
+echo "[INFO] 打包 $BACKUP_DIR..."
+tar --warning=no-file-changed -czf "/tmp/$TARFILE" -C "$BACKUP_DIR" . || {
     send_telegram "⚠️ *Nezha 备份失败*：打包错误"
     exit 1
 }
+mv "/tmp/$TARFILE" "$WORKDIR/"
 
-mv "$TARFILE" "$WORKDIR/"
 git add .
 
 # 删除超过 KEEP_DAYS 的旧备份
 echo "[INFO] 删除超过 $KEEP_DAYS 天的旧备份..."
 find "$WORKDIR" -name "nezha-backup-*.tar.gz" -type f -mtime +$KEEP_DAYS -exec git rm -f {} \; >/dev/null 2>&1
 
-git commit -m "Backup on $DATE" >/dev/null 2>&1
-git push origin main >/dev/null 2>&1 || {
-    send_telegram "⚠️ *Nezha 备份失败*：推送错误"
-    exit 1
-}
-
-send_telegram "🎉 *Nezha 备份成功！*已保存：$DATE，已自动清理超过 ${KEEP_DAYS} 天的旧备份"
-echo "[INFO] 备份成功"
+# 提交并推送（只有变更时才提交）
+if git diff --cached --quiet; then
+    echo "[INFO] 没有新的备份文件需要提交"
+else
+    git commit -m "Backup on $DATE"
+    git push origin main || {
+        send_telegram "⚠️ *Nezha 备份失败*：推送错误"
+        exit 1
+    }
+    send_telegram "🎉 *Nezha 备份成功！* 已保存：$DATE，已自动清理超过 ${KEEP_DAYS} 天的旧备份"
+    echo "[INFO] 备份成功"
+fi
 ```
 
 ---
@@ -144,21 +157,7 @@ chmod +x /root/nezha_backup.sh
 
 ---
 
-## 第四步：手动运行测试
-
-手动运行
-```bash
-bash /root/nezha_backup.sh
-```
-
-假装corn运行
-```bash
-env -i /bin/bash -c 'HOME=/root /bin/bash /root/nezha_backup.sh'
-```
-
----
-
-## 第五步：添加定时任务（每天北京时间凌晨 3 点）
+## 第四步：添加定时任务（每天北京时间凌晨 3 点）
 
 ```bash
 crontab -e
@@ -171,6 +170,20 @@ crontab -e
 ```
 
 保存并退出（vim：:wq；nano：Ctrl+O → Ctrl+X）
+
+---
+
+## 第五步：手动运行测试
+
+手动运行
+```bash
+bash /root/nezha_backup.sh
+```
+
+假装corn运行
+```bash
+env -i /bin/bash -c 'HOME=/root /bin/bash /root/nezha_backup.sh'
+```
 
 ---
 

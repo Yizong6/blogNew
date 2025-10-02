@@ -1,7 +1,7 @@
 ---
-title: Linux系统手动安装3x-ui
+title: Linux手动安装3x-ui
 published: 2025-10-02
-description: 让linux无视系统手动安装3x-u
+description: linux无视系统限制手动安装3x-ui
 #image: https://bd076fc.webp.li/2025/04/27832734d6536dd1d761ace15fee2118.jpg
 tags: [VPS, X-ui, 教程]
 category: VPS技术

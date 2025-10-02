@@ -113,9 +113,10 @@ EOF
 ```
 
 #### 启用并启动服务
+```bash
 systemctl daemon-reexec
 systemctl enable --now x-ui
-
+```
 
 ## 第三步：访问并设置面板
 

@@ -1,5 +1,5 @@
 ---
-title: linux系统手动安装3x-ui
+title: Linux系统手动安装3x-ui
 published: 2025-10-02
 description: 让linux无视系统手动安装3x-u
 #image: https://bd076fc.webp.li/2025/04/27832734d6536dd1d761ace15fee2118.jpg
@@ -16,14 +16,13 @@ lang: zh_CN      # 仅当文章语言与 `config.ts` 中的网站语言不同时
 :::
 
 
-操作环境：Alpine3.20 LXC 1C128M2G/nat-ipv4
+> **操作环境**：Alpine3.20 LXC 1C128M2G/nat-ipv4
 > **目标**：手动安装3x-ui
 
 
 ## 第一步：更新LXC环境
 
-Alpine
-```
+```Alpine
 apk update
 apk add curl wget unzip systemd
 ```
@@ -34,8 +33,8 @@ apk add curl wget unzip systemd
 ### 1. 下载3x-ui包，上传到LXC
 
 下载地址：https://pan.yizong.de/d/Share/BlogAPP/xui.tar.gz?sign=QQj8xZ8KS5GbwJLl4mb3ZxUlju81OpFx8VxUiQQFy_g=:0
-该3x-ui包为手动编译，不依赖 glibc
-下载后通过ssh工具上传到/opt目录
+<br/>该3x-ui包为手动编译，不依赖 glibc
+<br/>下载后通过ssh工具上传到/opt目录
 
 ### 2. 开始安装
 
@@ -118,15 +117,15 @@ systemctl daemon-reexec
 systemctl enable --now x-ui
 
 
-## 第三步.访问并设置面板
+## 第三步：访问并设置面板
 
 浏览器访问：http://你的IP:30000
-用户admin/密码admin
+<br/>用户admin/密码admin
 **请立即修改密码**
 
 ### 1.安装xray
 点击面板系统状态-xray-后面的版本号，选择一个点击
 
 ### 2.更新geoip.dat
-面板系统状态有个扳手，点进去只更新geoip.dat，**其余不要更新**
-重启xray和面板即可正常使用
+面板系统状态有个扳手，点进去只更新**geoip.dat**，**其余不要更新**
+<br/>重启xray和面板即可正常使用

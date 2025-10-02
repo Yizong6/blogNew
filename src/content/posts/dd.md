@@ -15,7 +15,7 @@ lang: zh_CN      # 仅当文章语言与 `config.ts` 中的网站语言不同时
 :::
 
 
-操作环境：Debian12 KVM VPS 2C2G10G/ipv4
+> **操作环境**：Debian12 KVM VPS 2C2G10G/ipv4
 > **目标**：dd win10精简版
 
 

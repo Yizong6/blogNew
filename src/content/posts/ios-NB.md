@@ -1,7 +1,7 @@
 ---
-title: ios17.0+侧载方案—NB全能助手
+title: ios17.0+侧载APP
 published: 2024-11-12
-description: IOS侧载APP
+description: IOS侧载APP，侧载方案—NB全能助手
 #image: https://bd076fc.webp.li/2024/11/83ad473481a27fdc33af56702568216e.png
 tags: [教程, IOS]
 category: IOS技术

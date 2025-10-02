@@ -1,7 +1,7 @@
 ---
-title: 哪吒面板自动打包并上传GitHub仓库备份
+title: 哪吒面板自动上传GitHub仓库备份
 published: 2025-06-16
-description: 哪吒面板自动备份到GitHub脚本
+description: 哪吒面板每天自动打包备份到GitHub脚本
 #image: https://bd076fc.webp.li/2025/06/e71c2e9a623fa8988658bd52749f07a5.png
 tags: [教程, VPS, GitHub]
 category: VPS技术

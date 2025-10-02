@@ -17,7 +17,7 @@ lang: zh_CN      # 仅当文章语言与 `config.ts` 中的网站语言不同时
 
 
 > **操作环境**：Alpine3.20 LXC 1C128M2G/nat-ipv4
-> **目标**：手动安装3x-ui
+> <br/>**目标**：手动安装3x-ui
 
 
 ## 第一步：更新LXC环境
@@ -32,7 +32,7 @@ apk add curl wget unzip systemd
 
 ### 1. 下载3x-ui包，上传到LXC
 
-下载地址：https://pan.yizong.de/d/Share/BlogAPP/xui.tar.gz?sign=QQj8xZ8KS5GbwJLl4mb3ZxUlju81OpFx8VxUiQQFy_g=:0
+下载地址：https://pan.yizong.de/BlogAPP/xui.tar.gz
 <br/>该3x-ui包为手动编译，不依赖 glibc
 <br/>下载后通过ssh工具上传到/opt目录
 

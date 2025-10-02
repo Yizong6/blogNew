@@ -1,7 +1,7 @@
 ---
 title: 哪吒面板自动打包并上传GitHub仓库备份
 published: 2025-06-16
-description: 哪吒面板备份到GitHub脚本
+description: 哪吒面板自动备份到GitHub脚本
 #image: https://bd076fc.webp.li/2025/06/e71c2e9a623fa8988658bd52749f07a5.png
 tags: [教程, VPS, GitHub]
 category: VPS技术
@@ -13,7 +13,7 @@ lang: zh_CN      # 仅当文章语言与 `config.ts` 中的网站语言不同时
 
 **此脚本为 Nezha面板 每日自动备份到 GitHub 并通过 Telegram 通知**
 
-操作环境：Debian11 VPS **nezha非docker安装**
+操作环境：Debian12 VPS **nezha非docker安装**
 > **目标**：每天凌晨 3:00（北京时间）自动
 > 1. 打包 `/opt/nezha` 为 `.tar.gz`  
 > 2. 上传到 GitHub 仓库  
@@ -68,83 +68,118 @@ vim /root/nezha_backup.sh
 
 ### 2. 粘贴以下内容（⚠️ 替换标注内容）
 
-```bash
 #!/bin/bash
+set -Eeuo pipefail
 
-### ====== 需要修改的地方 ======
-GITHUB_USER="XXXXX"        # 修改成你的 GitHub 用户名
-GITHUB_REPO="nezha-backup"       # 修改成你的仓库名
-GITHUB_TOKEN="ghp_xxxxxxxxxxxxxxxxxxxxx"  # 修改成你的 GitHub Token（需要有 repo 权限）
-BOT_TOKEN="XXXXX:XXXXXXXXXX"   # 修改成你的 Telegram Bot Token
-CHAT_ID="XXXXX"             # 修改成你的 Telegram Chat ID
-BACKUP_DIR="/opt/nezha"          # Nezha 安装路径
-KEEP_DAYS=7                      # 保留天数（超过就自动删除）
-### ====== 后面还有两处需要修改的地方 ======
+# ===== cron 环境修正 =====
+export SHELL=/bin/bash
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export HOME=/root
+export LANG=C.UTF-8
 
+### ====== 用户配置 START ======
+GITHUB_USER="xxxxxxx"
+GITHUB_REPO="nezha-backup"
+GITHUB_TOKEN="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+BOT_TOKEN="xxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+CHAT_ID="xxxxxxx"
+BACKUP_DIR="/opt/nezha"
+KEEP_DAYS=7
+### ====== 用户配置 END ======
 
 WORKDIR="/root/nezha-backup"
 DATE=$(date +%F)
 TARFILE="nezha-backup-$DATE.tar.gz"
 
+# 绝对路径命令
+GIT=$(command -v git)
+CURL=$(command -v curl)
+FIND=$(command -v find)
+TAR=$(command -v tar)
+
 send_telegram() {
     local msg="$1"
-    curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+    $CURL -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
         -d "chat_id=${CHAT_ID}" \
         -d "parse_mode=Markdown" \
-        -d "text=${msg}" >/dev/null
+        -d "text=${msg}" >/dev/null || true
 }
 
 echo "[INFO] 初始化仓库..."
 if [ ! -d "$WORKDIR/.git" ]; then
     rm -rf "$WORKDIR"
     mkdir -p "$WORKDIR"
-    git clone "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${GITHUB_REPO}.git" "$WORKDIR" || {
+    $GIT clone "https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${GITHUB_REPO}.git" "$WORKDIR" || {
         send_telegram "⚠️ *Nezha 备份失败*：无法克隆仓库"
         exit 1
     }
     cd "$WORKDIR" || exit 1
-    git config user.name "$GITHUB_USER"
-    git config user.email "${GITHUB_USER}@users.noreply.github.com"
+    $GIT config user.name "$GITHUB_USER"
+    $GIT config user.email "${GITHUB_USER}@users.noreply.github.com"
+    $GIT config --global --add safe.directory "$WORKDIR" || true
 
-    # 检查仓库是否为空
-    if [ -z "$(ls -A "$WORKDIR")" ]; then
+    # 检查仓库是否为空（忽略 .git 目录）
+    if [ -z "$($FIND "$WORKDIR" -mindepth 1 -maxdepth 1 -not -name '.git' -print -quit)" ]; then
         echo "# Nezha Backup Repo" > README.md
-        git add README.md
-        git commit -m "init repo"
-        git branch -M main
-        git push -u origin main
+        $GIT add README.md
+        $GIT commit -m "init repo"
+        $GIT branch -M main
+        $GIT push -u origin main
         echo "[INFO] 已完成 GitHub 仓库初始化"
     fi
 else
     cd "$WORKDIR" || exit 1
-    git pull origin main >/dev/null 2>&1 || true
+    $GIT config --global --add safe.directory "$WORKDIR" || true
+    $GIT pull origin main >/dev/null 2>&1 || true
+fi
+
+# 先确保备份目录存在
+if [ ! -d "$BACKUP_DIR" ]; then
+    send_telegram "⚠️ *Nezha 备份失败*：备份目录不存在：$BACKUP_DIR"
+    exit 1
 fi
 
 echo "[INFO] 打包 $BACKUP_DIR..."
-tar --warning=no-file-changed -czf "/tmp/$TARFILE" -C "$BACKUP_DIR" . || {
-    send_telegram "⚠️ *Nezha 备份失败*：打包错误"
-    exit 1
-}
-mv "/tmp/$TARFILE" "$WORKDIR/"
+ERRFILE="/tmp/nezha-tar-$DATE.err"
+# 直接输出到 WORKDIR，避免 /tmp->mv
+set +e
+$TAR --warning=no-file-changed -czf "$WORKDIR/$TARFILE" -C "$BACKUP_DIR" . 2>"$ERRFILE"
+tar_ec=$?
+set -e
 
-git add .
+if [ $tar_ec -ne 0 ]; then
+    if [ $tar_ec -eq 1 ]; then
+        # 1 多为非致命警告（例如文件在读时被改动），忽略并继续
+        echo "[WARN] tar 返回 1（警告），继续。最后几行："
+        tail -n 5 "$ERRFILE" || true
+    else
+        # >=2 视为失败
+        tailmsg=$(tail -n 10 "$ERRFILE" 2>/dev/null || true)
+        send_telegram "⚠️ *Nezha 备份失败*：打包错误（exit $tar_ec）
+$tailmsg"
+        exit 1
+    fi
+fi
+
+$GIT add .
 
 # 删除超过 KEEP_DAYS 的旧备份
 echo "[INFO] 删除超过 $KEEP_DAYS 天的旧备份..."
-find "$WORKDIR" -name "nezha-backup-*.tar.gz" -type f -mtime +$KEEP_DAYS -exec git rm -f {} \; >/dev/null 2>&1
+$FIND "$WORKDIR" -name "nezha-backup-*.tar.gz" -type f -mtime +$KEEP_DAYS -exec $GIT rm -f {} \; >/dev/null 2>&1 || true
 
 # 提交并推送（只有变更时才提交）
-if git diff --cached --quiet; then
+if $GIT diff --cached --quiet; then
     echo "[INFO] 没有新的备份文件需要提交"
 else
-    git commit -m "Backup on $DATE"
-    git push origin main || {
+    $GIT commit -m "Backup on $DATE"
+    $GIT push origin main || {
         send_telegram "⚠️ *Nezha 备份失败*：推送错误"
         exit 1
     }
     send_telegram "🎉 *Nezha 备份成功！* 已保存：$DATE，已自动清理超过 ${KEEP_DAYS} 天的旧备份"
     echo "[INFO] 备份成功"
 fi
+
 ```
 
 ---

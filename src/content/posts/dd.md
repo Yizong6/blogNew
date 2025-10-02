@@ -1,5 +1,5 @@
 ---
-title: VPS DD Windows
+title: VPS DD Windows10精简版
 published: 2025-08-16
 description: 让VPS装上win
 #image: https://bd076fc.webp.li/2025/04/27832734d6536dd1d761ace15fee2118.jpg
@@ -15,7 +15,7 @@ lang: zh_CN      # 仅当文章语言与 `config.ts` 中的网站语言不同时
 :::
 
 
-操作环境：Debian11 KVM VPS 2C2G10G/ipv4
+操作环境：Debian12 KVM VPS 2C2G10G/ipv4
 > **目标**：dd win10精简版
 
 
@@ -81,6 +81,7 @@ bash reinstall.sh anolis      7|8|23
 ```bash
 bash reinstall.sh dd --img "https://example.com/xxx.xz"
 ```
+我用的镜像是https://dd.wx.mk/cxthhhhh/Disk_Windows_10_x64_Lite_by_CXT_v1.0.vhd.gz
 
 最后输入`reboot`开始dd
 
@@ -91,4 +92,5 @@ bash reinstall.sh dd --img "https://example.com/xxx.xz"
 
 ## 最后：dd 成功
 
-利用win远程连接输入用户名密码
+利用win远程连接输入用户名Administrator/密码cxthhhhh.com
+记得一定要改密码

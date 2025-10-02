@@ -1,5 +1,5 @@
 ---
-title: 可执行文件部署SunPanel到debian12
+title: 部署SunPanel到VPS
 published: 2025-06-28
 description: 在Debian12上部署Sunpanel v1.3.0并使用Caddy反向代理。
 #image: https://doc.sun-panel.top/images/icon-small-new.png

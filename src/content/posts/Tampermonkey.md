@@ -1,5 +1,5 @@
 ---
-title: 利用Tampermonkey实现学习通刷课脚本
+title: 利用Tampermonkey实现学习通刷课
 published: 2024-11-14
 description: 解决水课学习刷视频一直等着浪费时间的烦恼。
 #image:

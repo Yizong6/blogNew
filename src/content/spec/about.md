@@ -99,7 +99,7 @@
 
 如果您发现网站内容存在滥用、侵权或其他违法违规行为，请通过以下方式联系我们：
 - **邮箱**：admin@yizong.de
-- **Telegram**：https://t.me/Yizong6
+- **Telegram**：https://t.me/YizongX
 
 我们将认真对待每一个举报，并在收到举报后及时处理相关问题。
 

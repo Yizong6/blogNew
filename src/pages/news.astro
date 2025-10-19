@@ -1,52 +1,18 @@
 ---
 // src/pages/news.astro
-// 仍然复用主题的主布局，保留站点的顶部导航与样式管线
 import MainGridLayout from '../layouts/MainGridLayout.astro';
 ---
 
 <MainGridLayout title="News" description="News">
-  <!-- 1) 让当前页面不产生外层滚动条 -->
-  <style is:global>
-    /* 只对本页面的生成 CSS 生效；其它路由不会引用这段样式 */
-    html, body { overflow: hidden; }
-
-    /* 2) 这个容器固定定位在导航栏下方，铺满剩余视口 */
-    #news-embed {
-      position: fixed;
-      left: 0;
-      right: 0;
-      top: var(--news-top, 64px);                 /* 导航栏高度（在脚本里动态测量） */
-      width: 100vw;
-      height: calc(100dvh - var(--news-top, 64px)); /* 用 100dvh 适配移动端地址栏收缩 */
-      z-index: 40;                                  /* 低于 navbar(z-50)，高于主体网格 */
-    }
-  </style>
-
-  <div id="news-embed">
-    <iframe
-      src="https://60s.lylme.com/"
-      title="News - 60秒读懂世界"
-      class="w-full h-full border-0"
-      loading="eager"
-      referrerpolicy="no-referrer-when-downgrade"
-    ></iframe>
+  <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative">
+    <div class="card-base z-10 p-0 relative w-full">
+      <iframe
+        src="https://60s.lylme.com/"
+        title="News - 60秒读懂世界"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        class="w-full h-[540vh] border-0 "
+      ></iframe>
+    </div>
   </div>
-
-  <!-- 3) 动态获取导航栏高度，避免遮挡或留白 -->
-  <script>
-    // 优先按主题里的 #navbar-wrapper 获取；退化到第一个 header/nav
-    const navbarEl = document.getElementById('navbar-wrapper') || document.querySelector('header, nav');
-
-    function updateOffset() {
-      const h = navbarEl ? navbarEl.offsetHeight : 64; // 没取到就用 64px 兜底
-      document.documentElement.style.setProperty('--news-top', h + 'px');
-    }
-
-    // 初次与窗口尺寸变化都更新一次
-    updateOffset();
-    window.addEventListener('resize', updateOffset);
-    if (navbarEl && 'ResizeObserver' in window) {
-      new ResizeObserver(updateOffset).observe(navbarEl);
-    }
-  </script>
 </MainGridLayout>

@@ -2,7 +2,7 @@
 title: Debian 12 VPS + Modal 部署 Docker 完整教程（免费额度内）
 published: 2026-04-27
 description: 从一台全新的 Debian 12 VPS 出发，使用 Modal 部署 Docker 镜像，并给出一个尽量保持在线且不超过免费额度的稳定方案。
-image: "/images/modal-debian12-cover.jpg"
+#image: "/images/modal-debian12-cover.jpg"
 tags: [Debian, Modal, Docker, VPS, Tutorial]
 category: DevOps
 draft: false
